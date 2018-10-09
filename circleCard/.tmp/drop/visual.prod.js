@@ -630,6 +630,7 @@ var powerbi;
                             .classed("textLabel", true);
                     }
                     Visual.prototype.update = function (options) {
+                        var dataView = options.dataViews[0];
                         var width = options.viewport.width;
                         var height = options.viewport.height;
                         this.svg.attr({
@@ -649,7 +650,7 @@ var powerbi;
                         });
                         var fontSizeValue = Math.min(width, height) / 5;
                         this.textValue
-                            .text("Value")
+                            .text(dataView.single.value)
                             .attr({
                             x: "50%",
                             y: "50%",
@@ -658,7 +659,7 @@ var powerbi;
                         }).style("font-size", fontSizeValue + "px");
                         var fontSizeLabel = fontSizeValue / 4;
                         this.textLabel
-                            .text("Label")
+                            .text(dataView.metadata.columns[0].displayName)
                             .attr({
                             x: "50%",
                             y: height / 2,

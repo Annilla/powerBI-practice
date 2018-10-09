@@ -49,6 +49,7 @@ module powerbi.extensibility.visual.circleCardFFD793C3973F441196C8C9F0273138C5  
         }
 
         public update(options: VisualUpdateOptions) {
+            let dataView: DataView = options.dataViews[0];
             let width: number = options.viewport.width;
             let height: number = options.viewport.height;
             this.svg.attr({
@@ -68,7 +69,7 @@ module powerbi.extensibility.visual.circleCardFFD793C3973F441196C8C9F0273138C5  
                 });
             let fontSizeValue: number = Math.min(width, height) / 5;
             this.textValue
-                .text("Value")
+                .text(dataView.single.value as string)
                 .attr({
                     x: "50%",
                     y: "50%",
@@ -77,7 +78,7 @@ module powerbi.extensibility.visual.circleCardFFD793C3973F441196C8C9F0273138C5  
                 }).style("font-size", fontSizeValue + "px");
             let fontSizeLabel: number = fontSizeValue / 4;
             this.textLabel
-                .text("Label")
+                .text(dataView.metadata.columns[0].displayName)
                 .attr({
                     x: "50%",
                     y: height / 2,
