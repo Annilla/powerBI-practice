@@ -28,21 +28,13 @@ module powerbi.extensibility.visual {
     "use strict";
     import DataViewObjectsParser = powerbi.extensibility.utils.dataview.DataViewObjectsParser;
 
-    export class VisualSettings extends DataViewObjectsParser {
-      public dataPoint: dataPointSettings = new dataPointSettings();
-      }
+    export class CircleSettings {
+        public circleColor: string = "yellow";
+        public circleThickness: number = 2;
+    }
 
-    export class dataPointSettings {
-     // Default color
-      public defaultColor: string = "";
-     // Show all
-      public showAllDataPoints: boolean = true;
-     // Fill
-      public fill: string = "";
-     // Color saturation
-      public fillRule: string = "";
-     // Text Size
-      public fontSize: number = 12;
-     }
+    export class VisualSettings extends DataViewObjectsParser {
+        public circle: CircleSettings = new CircleSettings();
+    }
 
 }

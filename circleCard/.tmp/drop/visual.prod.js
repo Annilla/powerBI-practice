@@ -551,32 +551,24 @@ var powerbi;
             (function (circleCardFFD793C3973F441196C8C9F0273138C5) {
                 "use strict";
                 var DataViewObjectsParser = powerbi.extensibility.utils.dataview.DataViewObjectsParser;
+                var CircleSettings = (function () {
+                    function CircleSettings() {
+                        this.circleColor = "yellow";
+                        this.circleThickness = 2;
+                    }
+                    return CircleSettings;
+                }());
+                circleCardFFD793C3973F441196C8C9F0273138C5.CircleSettings = CircleSettings;
                 var VisualSettings = (function (_super) {
                     __extends(VisualSettings, _super);
                     function VisualSettings() {
                         var _this = _super !== null && _super.apply(this, arguments) || this;
-                        _this.dataPoint = new dataPointSettings();
+                        _this.circle = new CircleSettings();
                         return _this;
                     }
                     return VisualSettings;
                 }(DataViewObjectsParser));
                 circleCardFFD793C3973F441196C8C9F0273138C5.VisualSettings = VisualSettings;
-                var dataPointSettings = (function () {
-                    function dataPointSettings() {
-                        // Default color
-                        this.defaultColor = "";
-                        // Show all
-                        this.showAllDataPoints = true;
-                        // Fill
-                        this.fill = "";
-                        // Color saturation
-                        this.fillRule = "";
-                        // Text Size
-                        this.fontSize = 12;
-                    }
-                    return dataPointSettings;
-                }());
-                circleCardFFD793C3973F441196C8C9F0273138C5.dataPointSettings = dataPointSettings;
             })(circleCardFFD793C3973F441196C8C9F0273138C5 = visual.circleCardFFD793C3973F441196C8C9F0273138C5 || (visual.circleCardFFD793C3973F441196C8C9F0273138C5 = {}));
         })(visual = extensibility.visual || (extensibility.visual = {}));
     })(extensibility = powerbi.extensibility || (powerbi.extensibility = {}));
@@ -629,6 +621,11 @@ var powerbi;
                         this.textLabel = this.container.append("text")
                             .classed("textLabel", true);
                     }
+                    Visual.prototype.enumerateObjectInstances = function (options) {
+                        var settings = this.visualSettings ||
+                            circleCardFFD793C3973F441196C8C9F0273138C5.VisualSettings.getDefault();
+                        return circleCardFFD793C3973F441196C8C9F0273138C5.VisualSettings.enumerateObjectInstances(settings, options);
+                    };
                     Visual.prototype.update = function (options) {
                         var dataView = options.dataViews[0];
                         var width = options.viewport.width;
@@ -638,11 +635,14 @@ var powerbi;
                             height: height
                         });
                         var radius = Math.min(width, height) / 2.2;
+                        this.visualSettings = circleCardFFD793C3973F441196C8C9F0273138C5.VisualSettings.parse(dataView);
+                        this.visualSettings.circle.circleThickness = Math.max(0, this.visualSettings.circle.circleThickness);
+                        this.visualSettings.circle.circleThickness = Math.min(10, this.visualSettings.circle.circleThickness);
                         this.circle
-                            .style("fill", "white")
+                            .style("fill", this.visualSettings.circle.circleColor)
                             .style("fill-opacity", 0.5)
                             .style("stroke", "black")
-                            .style("stroke-width", 2)
+                            .style("stroke-width", this.visualSettings.circle.circleThickness)
                             .attr({
                             r: radius,
                             cx: width / 2,
