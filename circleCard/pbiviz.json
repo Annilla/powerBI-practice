@@ -1,18 +1,18 @@
 {
   "visual": {
     "name": "circleCard",
-    "displayName": "CircleCard",
+    "displayName": "Circle Card",
     "guid": "circleCardFFD793C3973F441196C8C9F0273138C5",
     "visualClassName": "Visual",
     "version": "1.0.0",
-    "description": "",
+    "description": "Displays a formatted measure value inside a circle",
     "supportUrl": "",
     "gitHubUrl": ""
   },
   "apiVersion": "2.1.0",
   "author": {
-    "name": "",
-    "email": ""
+    "name": "Anny Chang",
+    "email": "annychang@kingstono365.onmicrosoft.com"
   },
   "assets": {
     "icon": "assets/icon.png"
