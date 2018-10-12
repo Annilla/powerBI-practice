@@ -647,11 +647,15 @@ var powerbi;
                         bars.enter()
                             .append("rect")
                             .classed("bar", true);
-                        bars.attr({
+                        bars
+                            .attr({
                             width: xScale.rangeBand(),
                             height: function (d) { return height - yScale(d.value); },
                             y: function (d) { return yScale(d.value); },
                             x: function (d) { return xScale(d.category); }
+                        })
+                            .style({
+                            fill: function (d) { return d.colour; }
                         });
                         bars.exit()
                             .remove();
@@ -675,7 +679,8 @@ var powerbi;
                         for (var i = 0, len = Math.max(categories.values.length, values.values.length); i < len; i++) {
                             viewModel.dataPoints.push({
                                 category: categories.values[i],
-                                value: values.values[i]
+                                value: values.values[i],
+                                colour: this.host.colorPalette.getColor(categories.values[i]).value
                             });
                         }
                         viewModel.maxValue = d3.max(viewModel.dataPoints, function (d) { return d.value; });
