@@ -628,32 +628,7 @@ var powerbi;
                             .classed("bar-group", true);
                     }
                     Visual.prototype.update = function (options) {
-                        var sample = [
-                            {
-                                category: "Apples",
-                                value: 10
-                            },
-                            {
-                                category: "Bananas",
-                                value: 20
-                            },
-                            {
-                                category: "Cherries",
-                                value: 30
-                            },
-                            {
-                                category: "Dates",
-                                value: 40
-                            },
-                            {
-                                category: "Elderberries",
-                                value: 50
-                            }
-                        ];
-                        var viewModel = {
-                            dataPoints: sample,
-                            maxValue: d3.max(sample, function (x) { return x.value; })
-                        };
+                        var viewModel = this.getViewModel(options);
                         var width = options.viewport.width;
                         var height = options.viewport.height;
                         this.svg.attr({
@@ -680,6 +655,31 @@ var powerbi;
                         });
                         bars.exit()
                             .remove();
+                    };
+                    Visual.prototype.getViewModel = function (options) {
+                        var dv = options.dataViews;
+                        var viewModel = {
+                            dataPoints: [],
+                            maxValue: 0
+                        };
+                        if (!dv
+                            || !dv[0]
+                            || !dv[0].categorical
+                            || !dv[0].categorical.categories
+                            || !dv[0].categorical.categories[0].source
+                            || !dv[0].categorical.values)
+                            return viewModel;
+                        var view = dv[0].categorical;
+                        var categories = view.categories[0];
+                        var values = view.values[0];
+                        for (var i = 0, len = Math.max(categories.values.length, values.values.length); i < len; i++) {
+                            viewModel.dataPoints.push({
+                                category: categories.values[i],
+                                value: values.values[i]
+                            });
+                        }
+                        viewModel.maxValue = d3.max(viewModel.dataPoints, function (d) { return d.value; });
+                        return viewModel;
                     };
                     return Visual;
                 }());
