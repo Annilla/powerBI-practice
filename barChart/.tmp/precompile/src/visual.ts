@@ -30,6 +30,7 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
         category: string;
         value: number;
         colour: string;
+        identity: powerbi.visuals.ISelectionId;
     };
 
     interface ViewModel {
@@ -43,6 +44,7 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
         private svg: d3.Selection<SVGElement>;
         private barGroup: d3.Selection<SVGElement>;
         private xPadding: number = 0.1;
+        private selectionManager: ISelectionManager;
 
         constructor(options: VisualConstructorOptions) {
             this.host = options.host;
@@ -52,6 +54,7 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
             this.barGroup = this.svg
                 .append("g")
                 .classed("bar-group", true);
+            this.selectionManager = this.host.createSelectionManager();
         }
 
         public update(options: VisualUpdateOptions) {
@@ -91,6 +94,17 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
                 })
                 .style({
                     fill: d => d.colour
+                })
+                .on("click", d => {
+                    this.selectionManager
+                        .select(d.identity, true)
+                        .then(ids => {
+                            bars.style({
+                                "fill-opacity": ids.length > 0 ?
+                                    d => ids.indexOf(d.identity) >= 0 ? 1.0 : 0.5
+                                    : 1.0
+                            });
+                        });
                 });
 
             bars.exit()
@@ -122,7 +136,10 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
                 viewModel.dataPoints.push({
                     category: <string>categories.values[i],
                     value: <number>values.values[i],
-                    colour: this.host.colorPalette.getColor(<string>categories.values[i]).value
+                    colour: this.host.colorPalette.getColor(<string>categories.values[i]).value,
+                    identity: this.host.createSelectionIdBuilder()
+                        .withCategory(categories, i)
+                        .createSelectionId()
                 });
             }
 
