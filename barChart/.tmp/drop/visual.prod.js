@@ -619,6 +619,19 @@ var powerbi;
                 var Visual = (function () {
                     function Visual(options) {
                         this.xPadding = 0.1;
+                        this.settings = {
+                            axis: {
+                                x: {
+                                    padding: 50
+                                },
+                                y: {
+                                    padding: 50
+                                }
+                            },
+                            border: {
+                                top: 10
+                            }
+                        };
                         this.host = options.host;
                         this.svg = d3.select(options.element)
                             .append("svg")
@@ -626,6 +639,10 @@ var powerbi;
                         this.barGroup = this.svg
                             .append("g")
                             .classed("bar-group", true);
+                        this.xAxisGroup = this.svg.append("g")
+                            .classed("x-axis", true);
+                        this.yAxisGroup = this.svg.append("g")
+                            .classed("y-axis", true);
                         this.selectionManager = this.host.createSelectionManager();
                     }
                     Visual.prototype.update = function (options) {
@@ -639,10 +656,47 @@ var powerbi;
                         });
                         var yScale = d3.scale.linear()
                             .domain([0, viewModel.maxValue])
-                            .range([height, 0]);
+                            .range([height - this.settings.axis.x.padding, 0 + this.settings.border.top]);
+                        var yAxis = d3.svg.axis()
+                            .scale(yScale)
+                            .orient("left")
+                            .tickSize(1);
+                        this.yAxisGroup
+                            .call(yAxis)
+                            .attr({
+                            transform: "translate(" + this.settings.axis.x.padding + ",0)"
+                        })
+                            .style({
+                            fill: "#777777"
+                        })
+                            .selectAll("text")
+                            .style({
+                            "text-anchor": "end",
+                            "font-size": "x-small"
+                        });
                         var xScale = d3.scale.ordinal()
                             .domain(viewModel.dataPoints.map(function (d) { return d.category; }))
-                            .rangeRoundBands([0, width], this.xPadding);
+                            .rangeRoundBands([this.settings.axis.y.padding, width], this.xPadding);
+                        var xAxis = d3.svg.axis()
+                            .scale(xScale)
+                            .orient("bottom")
+                            .tickSize(1);
+                        this.xAxisGroup
+                            .call(xAxis)
+                            .attr({
+                            transform: "translate(0," + (height - this.settings.axis.x.padding) + ")"
+                        })
+                            .style({
+                            fill: "#777777"
+                        })
+                            .selectAll("text")
+                            .attr({
+                            transform: "rotate(-35)"
+                        })
+                            .style({
+                            "text-anchor": "end",
+                            "font-size": "x-small"
+                        });
                         var bars = this.barGroup
                             .selectAll(".bar")
                             .data(viewModel.dataPoints);
@@ -652,7 +706,7 @@ var powerbi;
                         bars
                             .attr({
                             width: xScale.rangeBand(),
-                            height: function (d) { return height - yScale(d.value); },
+                            height: function (d) { return height - yScale(d.value) - _this.settings.axis.x.padding; },
                             y: function (d) { return yScale(d.value); },
                             x: function (d) { return xScale(d.category); }
                         })

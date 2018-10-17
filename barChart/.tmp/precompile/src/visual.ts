@@ -47,20 +47,45 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
         private barGroup: d3.Selection<SVGElement>;
         private xPadding: number = 0.1;
         private selectionManager: ISelectionManager;
+        private xAxisGroup: d3.Selection<SVGElement>;
+        private yAxisGroup: d3.Selection<SVGElement>;
+
+        private settings = {
+            axis: {
+                x: {
+                    padding: 50
+                },
+                y: {
+                    padding: 50
+                }
+            },
+            border: {
+                top: 10
+            }
+        }
 
         constructor(options: VisualConstructorOptions) {
             this.host = options.host;
+
             this.svg = d3.select(options.element)
                 .append("svg")
                 .classed("my-little-bar-chart", true);
+
             this.barGroup = this.svg
                 .append("g")
                 .classed("bar-group", true);
+
+            this.xAxisGroup = this.svg.append("g")
+                .classed("x-axis", true);
+            
+            this.yAxisGroup = this.svg.append("g")
+                .classed("y-axis", true);
+            
             this.selectionManager = this.host.createSelectionManager();
         }
 
         public update(options: VisualUpdateOptions) {
-            
+
             let viewModel = this.getViewModel(options);
 
             let width = options.viewport.width;
@@ -73,11 +98,52 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
 
             let yScale = d3.scale.linear()
                 .domain([0, viewModel.maxValue])
-                .range([height, 0]);
+                .range([height - this.settings.axis.x.padding, 0 + this.settings.border.top]);
             
+            let yAxis = d3.svg.axis()
+                .scale(yScale)
+                .orient("left")
+                .tickSize(1);
+            
+            this.yAxisGroup
+                .call(yAxis)
+                .attr({
+                    transform: `translate(${this.settings.axis.x.padding},0)`
+                })
+                .style({
+                    fill: "#777777"
+                })
+                .selectAll("text")
+                .style({
+                    "text-anchor": "end",
+                    "font-size": "x-small"
+                });
+
             let xScale = d3.scale.ordinal()
-                .domain(viewModel.dataPoints.map(d =>d.category))
-                .rangeRoundBands([0, width], this.xPadding);
+                .domain(viewModel.dataPoints.map(d => d.category))
+                .rangeRoundBands([this.settings.axis.y.padding, width], this.xPadding);
+            
+            let xAxis = d3.svg.axis()
+                .scale(xScale)
+                .orient("bottom")
+                .tickSize(1);
+
+            this.xAxisGroup
+                .call(xAxis)
+                .attr({
+                    transform: `translate(0,${height - this.settings.axis.x.padding})`
+                })
+                .style({
+                    fill: "#777777"
+                })
+                .selectAll("text")
+                .attr({
+                    transform: "rotate(-35)"
+                })
+                .style({
+                    "text-anchor": "end",
+                    "font-size": "x-small"
+                });
 
             let bars = this.barGroup
                 .selectAll(".bar")
@@ -86,11 +152,11 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
             bars.enter()
                 .append("rect")
                 .classed("bar", true);
-            
+
             bars
                 .attr({
                     width: xScale.rangeBand(),
-                    height: d => height - yScale(d.value),
+                    height: d => height - yScale(d.value) - this.settings.axis.x.padding,
                     y: d => yScale(d.value),
                     x: d => xScale(d.category)
                 })
@@ -115,7 +181,7 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
         }
 
         private getViewModel(options: VisualUpdateOptions): ViewModel {
-            
+
             let dv = options.dataViews;
 
             let viewModel: ViewModel = {
@@ -131,7 +197,7 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
                 || !dv[0].categorical.categories[0].source
                 || !dv[0].categorical.values)
                 return viewModel;
-            
+
             let view = dv[0].categorical;
             let categories = view.categories[0];
             let values = view.values[0];
