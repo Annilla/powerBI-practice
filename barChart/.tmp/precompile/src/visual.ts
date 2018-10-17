@@ -31,11 +31,13 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
         value: number;
         colour: string;
         identity: powerbi.visuals.ISelectionId;
+        highlighted: boolean;
     };
 
     interface ViewModel {
         dataPoints: DataPoint[];
         maxValue: number;
+        highlights: boolean;
     };
 
     export class Visual implements IVisual {
@@ -93,7 +95,8 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
                     x: d => xScale(d.category)
                 })
                 .style({
-                    fill: d => d.colour
+                    fill: d => d.colour,
+                    "fill-opacity": d => viewModel.highlights ? d.highlighted ? 1.0 : 0.5 : 1.0
                 })
                 .on("click", d => {
                     this.selectionManager
@@ -117,7 +120,8 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
 
             let viewModel: ViewModel = {
                 dataPoints: [],
-                maxValue: 0
+                maxValue: 0,
+                highlights: false
             };
 
             if (!dv
@@ -131,6 +135,7 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
             let view = dv[0].categorical;
             let categories = view.categories[0];
             let values = view.values[0];
+            let highlights = values.highlights;
 
             for (let i = 0, len = Math.max(categories.values.length, values.values.length); i < len; i++) {
                 viewModel.dataPoints.push({
@@ -139,11 +144,13 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
                     colour: this.host.colorPalette.getColor(<string>categories.values[i]).value,
                     identity: this.host.createSelectionIdBuilder()
                         .withCategory(categories, i)
-                        .createSelectionId()
+                        .createSelectionId(),
+                    highlighted: highlights ? highlights[i] ? true : false : false
                 });
             }
 
             viewModel.maxValue = d3.max(viewModel.dataPoints, d => d.value);
+            viewModel.highlights = viewModel.dataPoints.filter(d => d.highlighted).length > 0;
 
             return viewModel;
         }

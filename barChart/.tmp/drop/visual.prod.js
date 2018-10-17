@@ -657,7 +657,8 @@ var powerbi;
                             x: function (d) { return xScale(d.category); }
                         })
                             .style({
-                            fill: function (d) { return d.colour; }
+                            fill: function (d) { return d.colour; },
+                            "fill-opacity": function (d) { return viewModel.highlights ? d.highlighted ? 1.0 : 0.5 : 1.0; }
                         })
                             .on("click", function (d) {
                             _this.selectionManager
@@ -677,7 +678,8 @@ var powerbi;
                         var dv = options.dataViews;
                         var viewModel = {
                             dataPoints: [],
-                            maxValue: 0
+                            maxValue: 0,
+                            highlights: false
                         };
                         if (!dv
                             || !dv[0]
@@ -689,6 +691,7 @@ var powerbi;
                         var view = dv[0].categorical;
                         var categories = view.categories[0];
                         var values = view.values[0];
+                        var highlights = values.highlights;
                         for (var i = 0, len = Math.max(categories.values.length, values.values.length); i < len; i++) {
                             viewModel.dataPoints.push({
                                 category: categories.values[i],
@@ -696,10 +699,12 @@ var powerbi;
                                 colour: this.host.colorPalette.getColor(categories.values[i]).value,
                                 identity: this.host.createSelectionIdBuilder()
                                     .withCategory(categories, i)
-                                    .createSelectionId()
+                                    .createSelectionId(),
+                                highlighted: highlights ? highlights[i] ? true : false : false
                             });
                         }
                         viewModel.maxValue = d3.max(viewModel.dataPoints, function (d) { return d.value; });
+                        viewModel.highlights = viewModel.dataPoints.filter(function (d) { return d.highlighted; }).length > 0;
                         return viewModel;
                     };
                     return Visual;
