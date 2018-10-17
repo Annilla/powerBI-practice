@@ -551,32 +551,23 @@ var powerbi;
             (function (barChartBC80E870F53F457F81A8959510AC6A85) {
                 "use strict";
                 var DataViewObjectsParser = powerbi.extensibility.utils.dataview.DataViewObjectsParser;
+                var xAxisSettings = (function () {
+                    function xAxisSettings() {
+                        this.show = true;
+                    }
+                    return xAxisSettings;
+                }());
+                barChartBC80E870F53F457F81A8959510AC6A85.xAxisSettings = xAxisSettings;
                 var VisualSettings = (function (_super) {
                     __extends(VisualSettings, _super);
                     function VisualSettings() {
                         var _this = _super !== null && _super.apply(this, arguments) || this;
-                        _this.dataPoint = new dataPointSettings();
+                        _this.xAxis = new xAxisSettings();
                         return _this;
                     }
                     return VisualSettings;
                 }(DataViewObjectsParser));
                 barChartBC80E870F53F457F81A8959510AC6A85.VisualSettings = VisualSettings;
-                var dataPointSettings = (function () {
-                    function dataPointSettings() {
-                        // Default color
-                        this.defaultColor = "";
-                        // Show all
-                        this.showAllDataPoints = true;
-                        // Fill
-                        this.fill = "";
-                        // Color saturation
-                        this.fillRule = "";
-                        // Text Size
-                        this.fontSize = 12;
-                    }
-                    return dataPointSettings;
-                }());
-                barChartBC80E870F53F457F81A8959510AC6A85.dataPointSettings = dataPointSettings;
             })(barChartBC80E870F53F457F81A8959510AC6A85 = visual.barChartBC80E870F53F457F81A8959510AC6A85 || (visual.barChartBC80E870F53F457F81A8959510AC6A85 = {}));
         })(visual = extensibility.visual || (extensibility.visual = {}));
     })(extensibility = powerbi.extensibility || (powerbi.extensibility = {}));
@@ -622,14 +613,27 @@ var powerbi;
                         this.settings = {
                             axis: {
                                 x: {
-                                    padding: 50
+                                    padding: {
+                                        default: 50,
+                                        value: 50
+                                    },
+                                    show: {
+                                        default: true,
+                                        value: true
+                                    }
                                 },
                                 y: {
-                                    padding: 50
+                                    padding: {
+                                        default: 50,
+                                        value: 50
+                                    }
                                 }
                             },
                             border: {
-                                top: 10
+                                top: {
+                                    default: 10,
+                                    value: 10
+                                }
                             }
                         };
                         this.host = options.host;
@@ -645,18 +649,26 @@ var powerbi;
                             .classed("y-axis", true);
                         this.selectionManager = this.host.createSelectionManager();
                     }
+                    Visual.prototype.enumerateObjectInstances = function (options) {
+                        var settings = this.visualSettings ||
+                            barChartBC80E870F53F457F81A8959510AC6A85.VisualSettings.getDefault();
+                        return barChartBC80E870F53F457F81A8959510AC6A85.VisualSettings.enumerateObjectInstances(settings, options);
+                    };
                     Visual.prototype.update = function (options) {
                         var _this = this;
+                        var dataView = options.dataViews[0];
                         var viewModel = this.getViewModel(options);
                         var width = options.viewport.width;
                         var height = options.viewport.height;
+                        this.visualSettings = barChartBC80E870F53F457F81A8959510AC6A85.VisualSettings.parse(dataView);
+                        var xAxisPadding = this.visualSettings.xAxis.show ? this.settings.axis.x.padding.value : 0;
                         this.svg.attr({
                             width: width,
                             height: height
                         });
                         var yScale = d3.scale.linear()
                             .domain([0, viewModel.maxValue])
-                            .range([height - this.settings.axis.x.padding, 0 + this.settings.border.top]);
+                            .range([height - xAxisPadding, 0 + this.settings.border.top.value]);
                         var yAxis = d3.svg.axis()
                             .scale(yScale)
                             .orient("left")
@@ -676,7 +688,7 @@ var powerbi;
                         });
                         var xScale = d3.scale.ordinal()
                             .domain(viewModel.dataPoints.map(function (d) { return d.category; }))
-                            .rangeRoundBands([this.settings.axis.y.padding, width], this.xPadding);
+                            .rangeRoundBands([this.settings.axis.y.padding.value, width], this.xPadding);
                         var xAxis = d3.svg.axis()
                             .scale(xScale)
                             .orient("bottom")
@@ -684,7 +696,7 @@ var powerbi;
                         this.xAxisGroup
                             .call(xAxis)
                             .attr({
-                            transform: "translate(0," + (height - this.settings.axis.x.padding) + ")"
+                            transform: "translate(0," + (height - xAxisPadding) + ")"
                         })
                             .style({
                             fill: "#777777"
@@ -706,7 +718,7 @@ var powerbi;
                         bars
                             .attr({
                             width: xScale.rangeBand(),
-                            height: function (d) { return height - yScale(d.value) - _this.settings.axis.x.padding; },
+                            height: function (d) { return height - yScale(d.value) - xAxisPadding; },
                             y: function (d) { return yScale(d.value); },
                             x: function (d) { return xScale(d.category); }
                         })

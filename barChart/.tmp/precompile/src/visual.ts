@@ -49,18 +49,32 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
         private selectionManager: ISelectionManager;
         private xAxisGroup: d3.Selection<SVGElement>;
         private yAxisGroup: d3.Selection<SVGElement>;
+        private visualSettings: VisualSettings;
 
         private settings = {
             axis: {
                 x: {
-                    padding: 50
+                    padding: {
+                        default: 50,
+                        value: 50
+                    },
+                    show: {
+                        default: true,
+                        value: true
+                    }
                 },
                 y: {
-                    padding: 50
+                    padding: {
+                        default: 50,
+                        value: 50
+                    }
                 }
             },
             border: {
-                top: 10
+                top: {
+                    default: 10,
+                    value: 10
+                }
             }
         }
 
@@ -84,12 +98,22 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
             this.selectionManager = this.host.createSelectionManager();
         }
 
+        public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions): VisualObjectInstanceEnumeration {
+            const settings: VisualSettings = this.visualSettings ||
+                VisualSettings.getDefault() as VisualSettings;
+            return VisualSettings.enumerateObjectInstances(settings, options);
+        }
+
         public update(options: VisualUpdateOptions) {
+            let dataView: DataView = options.dataViews[0];
 
             let viewModel = this.getViewModel(options);
 
             let width = options.viewport.width;
             let height = options.viewport.height;
+            
+            this.visualSettings = VisualSettings.parse<VisualSettings>(dataView);
+            let xAxisPadding = this.visualSettings.xAxis.show ? this.settings.axis.x.padding.value : 0;
 
             this.svg.attr({
                 width: width,
@@ -98,7 +122,7 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
 
             let yScale = d3.scale.linear()
                 .domain([0, viewModel.maxValue])
-                .range([height - this.settings.axis.x.padding, 0 + this.settings.border.top]);
+                .range([height - xAxisPadding, 0 + this.settings.border.top.value]);
             
             let yAxis = d3.svg.axis()
                 .scale(yScale)
@@ -121,7 +145,7 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
 
             let xScale = d3.scale.ordinal()
                 .domain(viewModel.dataPoints.map(d => d.category))
-                .rangeRoundBands([this.settings.axis.y.padding, width], this.xPadding);
+                .rangeRoundBands([this.settings.axis.y.padding.value, width], this.xPadding);
             
             let xAxis = d3.svg.axis()
                 .scale(xScale)
@@ -131,7 +155,7 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
             this.xAxisGroup
                 .call(xAxis)
                 .attr({
-                    transform: `translate(0,${height - this.settings.axis.x.padding})`
+                    transform: `translate(0,${height - xAxisPadding})`
                 })
                 .style({
                     fill: "#777777"
@@ -156,7 +180,7 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
             bars
                 .attr({
                     width: xScale.rangeBand(),
-                    height: d => height - yScale(d.value) - this.settings.axis.x.padding,
+                    height: d => height - yScale(d.value) - xAxisPadding,
                     y: d => yScale(d.value),
                     x: d => xScale(d.category)
                 })
@@ -220,5 +244,25 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
 
             return viewModel;
         }
+
+
+        // public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions): VisualObjectInstanceEnumeration {
+        //     let propertyGroupName = options.objectName;
+        //     let properties: VisualObjectInstance[] = [];
+
+        //     switch (propertyGroupName) {
+        //         case "xAxis":
+        //             properties.push({
+        //                 objectName: propertyGroupName,
+        //                 properties: {
+        //                     show: this.settings.axis.x.show.value
+        //                 },
+        //                 selector: null
+        //             });
+        //             break;
+        //     }
+
+        //     return properties;
+        // }
     }
 }
