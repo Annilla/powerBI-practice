@@ -114,6 +114,7 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
             
             this.visualSettings = VisualSettings.parse<VisualSettings>(dataView);
             let xAxisPadding = this.visualSettings.xAxis.show ? this.settings.axis.x.padding.value : 0;
+            let yAxisPadding = this.visualSettings.yAxis.show ? this.settings.axis.y.padding.value : 0;
 
             this.svg.attr({
                 width: width,
@@ -132,7 +133,7 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
             this.yAxisGroup
                 .call(yAxis)
                 .attr({
-                    transform: `translate(${this.settings.axis.x.padding},0)`
+                    transform: `translate(${yAxisPadding},0)`
                 })
                 .style({
                     fill: "#777777"
@@ -145,7 +146,7 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
 
             let xScale = d3.scale.ordinal()
                 .domain(viewModel.dataPoints.map(d => d.category))
-                .rangeRoundBands([this.settings.axis.y.padding.value, width], this.xPadding);
+                .rangeRoundBands([yAxisPadding, width], this.xPadding);
             
             let xAxis = d3.svg.axis()
                 .scale(xScale)

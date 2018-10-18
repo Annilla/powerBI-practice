@@ -558,11 +558,19 @@ var powerbi;
                     return xAxisSettings;
                 }());
                 barChartBC80E870F53F457F81A8959510AC6A85.xAxisSettings = xAxisSettings;
+                var yAxisSettings = (function () {
+                    function yAxisSettings() {
+                        this.show = true;
+                    }
+                    return yAxisSettings;
+                }());
+                barChartBC80E870F53F457F81A8959510AC6A85.yAxisSettings = yAxisSettings;
                 var VisualSettings = (function (_super) {
                     __extends(VisualSettings, _super);
                     function VisualSettings() {
                         var _this = _super !== null && _super.apply(this, arguments) || this;
                         _this.xAxis = new xAxisSettings();
+                        _this.yAxis = new yAxisSettings();
                         return _this;
                     }
                     return VisualSettings;
@@ -662,6 +670,7 @@ var powerbi;
                         var height = options.viewport.height;
                         this.visualSettings = barChartBC80E870F53F457F81A8959510AC6A85.VisualSettings.parse(dataView);
                         var xAxisPadding = this.visualSettings.xAxis.show ? this.settings.axis.x.padding.value : 0;
+                        var yAxisPadding = this.visualSettings.yAxis.show ? this.settings.axis.y.padding.value : 0;
                         this.svg.attr({
                             width: width,
                             height: height
@@ -676,7 +685,7 @@ var powerbi;
                         this.yAxisGroup
                             .call(yAxis)
                             .attr({
-                            transform: "translate(" + this.settings.axis.x.padding + ",0)"
+                            transform: "translate(" + yAxisPadding + ",0)"
                         })
                             .style({
                             fill: "#777777"
@@ -688,7 +697,7 @@ var powerbi;
                         });
                         var xScale = d3.scale.ordinal()
                             .domain(viewModel.dataPoints.map(function (d) { return d.category; }))
-                            .rangeRoundBands([this.settings.axis.y.padding.value, width], this.xPadding);
+                            .rangeRoundBands([yAxisPadding, width], this.xPadding);
                         var xAxis = d3.svg.axis()
                             .scale(xScale)
                             .orient("bottom")

@@ -11,6 +11,17 @@
                     }
                 }
             }
+        },
+        "yAxis": {
+            "displayName": "Y Axis",
+            "properties": {
+                "show": {
+                    "displayName": "Show Y Axis",
+                    "type": {
+                        "bool": true
+                    }
+                }
+            }
         }
     },
     "dataRoles": [
