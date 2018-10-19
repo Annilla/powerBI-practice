@@ -11,6 +11,7 @@
     ".api/v2.1.0/PowerBI-visuals.d.ts",
     "node_modules/powerbi-visuals-utils-dataviewutils/lib/index.d.ts",
     "src/settings.ts",
+    "src/resources.ts",
     "src/visual.ts",
     "node_modules/@types/d3/index.d.ts"
   ]

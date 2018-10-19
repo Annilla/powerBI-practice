@@ -25,20 +25,20 @@
  */
 
 module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
-    "use strict";
-    import DataViewObjectsParser = powerbi.extensibility.utils.dataview.DataViewObjectsParser;
+    // "use strict";
+    // import DataViewObjectsParser = powerbi.extensibility.utils.dataview.DataViewObjectsParser;
 
-    export class xAxisSettings {
-        public show: boolean = true;
-    }
+    // export class xAxisSettings {
+    //     public show: boolean = true;
+    // }
 
-    export class yAxisSettings {
-        public show: boolean = true;
-    }
+    // export class yAxisSettings {
+    //     public show: boolean = true;
+    // }
 
-    export class VisualSettings extends DataViewObjectsParser {
-        public xAxis: xAxisSettings = new xAxisSettings();
-        public yAxis: yAxisSettings = new yAxisSettings();
-    }
+    // export class VisualSettings extends DataViewObjectsParser {
+    //     public xAxis: xAxisSettings = new xAxisSettings();
+    //     public yAxis: yAxisSettings = new yAxisSettings();
+    // }
 
 }
