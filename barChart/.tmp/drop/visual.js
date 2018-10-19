@@ -910,8 +910,8 @@ var powerbi;
     (function (visuals) {
         var plugins;
         (function (plugins) {
-            plugins.barChartBC80E870F53F457F81A8959510AC6A85_DEBUG = {
-                name: 'barChartBC80E870F53F457F81A8959510AC6A85_DEBUG',
+            plugins.barChartBC80E870F53F457F81A8959510AC6A85 = {
+                name: 'barChartBC80E870F53F457F81A8959510AC6A85',
                 displayName: 'BarChart',
                 class: 'Visual',
                 version: '1.0.0',
