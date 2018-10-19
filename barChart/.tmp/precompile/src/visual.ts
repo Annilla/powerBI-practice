@@ -23,6 +23,7 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
+import DataViewObjects = powerbi.extensibility.utils.dataview.DataViewObjects;
 
 module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
 
@@ -49,7 +50,7 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
         private selectionManager: ISelectionManager;
         private xAxisGroup: d3.Selection<SVGElement>;
         private yAxisGroup: d3.Selection<SVGElement>;
-        private visualSettings: VisualSettings;
+        // private visualSettings: VisualSettings;
 
         private settings = {
             axis: {
@@ -67,6 +68,10 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
                     padding: {
                         default: 50,
                         value: 50
+                    },
+                    show: {
+                        default: true,
+                        value: true
                     }
                 }
             },
@@ -99,22 +104,43 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
         }
 
         public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions): VisualObjectInstanceEnumeration {
-            const settings: VisualSettings = this.visualSettings ||
-                VisualSettings.getDefault() as VisualSettings;
-            return VisualSettings.enumerateObjectInstances(settings, options);
+            let objectName = options.objectName;
+            let objectEnumeration: VisualObjectInstance[] = [];
+
+            switch(objectName) {
+                case 'xAxis':
+                    objectEnumeration.push({
+                        objectName: objectName,
+                        properties: {
+                            show: this.settings.axis.x.show.value,
+                        },
+                        selector: null
+                    });
+                    break;
+                case 'yAxis':
+                    objectEnumeration.push({
+                        objectName: objectName,
+                        properties: {
+                            show: this.settings.axis.y.show.value,
+                        },
+                        selector: null
+                    });
+                    break;
+            };
+
+            return objectEnumeration;
         }
 
         public update(options: VisualUpdateOptions) {
-            let dataView: DataView = options.dataViews[0];
+            this.updateSettings(options);
 
             let viewModel = this.getViewModel(options);
 
             let width = options.viewport.width;
             let height = options.viewport.height;
             
-            this.visualSettings = VisualSettings.parse<VisualSettings>(dataView);
-            let xAxisPadding = this.visualSettings.xAxis.show ? this.settings.axis.x.padding.value : 0;
-            let yAxisPadding = this.visualSettings.yAxis.show ? this.settings.axis.y.padding.value : 0;
+            let xAxisPadding = this.settings.axis.x.show.value ? this.settings.axis.x.padding.value : 0;
+            let yAxisPadding = this.settings.axis.y.show.value ? this.settings.axis.y.padding.value : 0;
 
             this.svg.attr({
                 width: width,
@@ -205,6 +231,22 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
                 .remove();
         }
 
+        private updateSettings(options: VisualUpdateOptions) {
+            this.settings.axis.x.show.value = DataViewObjects.getValue(
+                options.dataViews[0].metadata.objects, {
+                    objectName: "xAxis",
+                    propertyName: "show"
+                },
+                this.settings.axis.x.show.default);
+
+            this.settings.axis.y.show.value = DataViewObjects.getValue(
+                options.dataViews[0].metadata.objects, {
+                    objectName: "yAxis",
+                    propertyName: "show"
+                },
+                this.settings.axis.y.show.default);
+        }
+
         private getViewModel(options: VisualUpdateOptions): ViewModel {
 
             let dv = options.dataViews;
@@ -246,24 +288,5 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
             return viewModel;
         }
 
-
-        // public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions): VisualObjectInstanceEnumeration {
-        //     let propertyGroupName = options.objectName;
-        //     let properties: VisualObjectInstance[] = [];
-
-        //     switch (propertyGroupName) {
-        //         case "xAxis":
-        //             properties.push({
-        //                 objectName: propertyGroupName,
-        //                 properties: {
-        //                     show: this.settings.axis.x.show.value
-        //                 },
-        //                 selector: null
-        //             });
-        //             break;
-        //     }
-
-        //     return properties;
-        // }
     }
 }

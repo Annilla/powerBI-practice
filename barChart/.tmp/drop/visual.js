@@ -605,6 +605,7 @@ var powerbi;
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
+var DataViewObjects = powerbi.extensibility.utils.dataview.DataViewObjects;
 var powerbi;
 (function (powerbi) {
     var extensibility;
@@ -618,6 +619,7 @@ var powerbi;
                 var Visual = (function () {
                     function Visual(options) {
                         this.xPadding = 0.1;
+                        // private visualSettings: VisualSettings;
                         this.settings = {
                             axis: {
                                 x: {
@@ -634,6 +636,10 @@ var powerbi;
                                     padding: {
                                         default: 50,
                                         value: 50
+                                    },
+                                    show: {
+                                        default: true,
+                                        value: true
                                     }
                                 }
                             },
@@ -658,19 +664,39 @@ var powerbi;
                         this.selectionManager = this.host.createSelectionManager();
                     }
                     Visual.prototype.enumerateObjectInstances = function (options) {
-                        var settings = this.visualSettings ||
-                            barChartBC80E870F53F457F81A8959510AC6A85.VisualSettings.getDefault();
-                        return barChartBC80E870F53F457F81A8959510AC6A85.VisualSettings.enumerateObjectInstances(settings, options);
+                        var objectName = options.objectName;
+                        var objectEnumeration = [];
+                        switch (objectName) {
+                            case 'xAxis':
+                                objectEnumeration.push({
+                                    objectName: objectName,
+                                    properties: {
+                                        show: this.settings.axis.x.show.value,
+                                    },
+                                    selector: null
+                                });
+                                break;
+                            case 'yAxis':
+                                objectEnumeration.push({
+                                    objectName: objectName,
+                                    properties: {
+                                        show: this.settings.axis.y.show.value,
+                                    },
+                                    selector: null
+                                });
+                                break;
+                        }
+                        ;
+                        return objectEnumeration;
                     };
                     Visual.prototype.update = function (options) {
                         var _this = this;
-                        var dataView = options.dataViews[0];
+                        this.updateSettings(options);
                         var viewModel = this.getViewModel(options);
                         var width = options.viewport.width;
                         var height = options.viewport.height;
-                        this.visualSettings = barChartBC80E870F53F457F81A8959510AC6A85.VisualSettings.parse(dataView);
-                        var xAxisPadding = this.visualSettings.xAxis.show ? this.settings.axis.x.padding.value : 0;
-                        var yAxisPadding = this.visualSettings.yAxis.show ? this.settings.axis.y.padding.value : 0;
+                        var xAxisPadding = this.settings.axis.x.show.value ? this.settings.axis.x.padding.value : 0;
+                        var yAxisPadding = this.settings.axis.y.show.value ? this.settings.axis.y.padding.value : 0;
                         this.svg.attr({
                             width: width,
                             height: height
@@ -748,6 +774,16 @@ var powerbi;
                         });
                         bars.exit()
                             .remove();
+                    };
+                    Visual.prototype.updateSettings = function (options) {
+                        this.settings.axis.x.show.value = DataViewObjects.getValue(options.dataViews[0].metadata.objects, {
+                            objectName: "xAxis",
+                            propertyName: "show"
+                        }, this.settings.axis.x.show.default);
+                        this.settings.axis.y.show.value = DataViewObjects.getValue(options.dataViews[0].metadata.objects, {
+                            objectName: "yAxis",
+                            propertyName: "show"
+                        }, this.settings.axis.y.show.default);
                     };
                     Visual.prototype.getViewModel = function (options) {
                         var dv = options.dataViews;
