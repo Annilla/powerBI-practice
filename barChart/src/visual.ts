@@ -50,7 +50,7 @@ module powerbi.extensibility.visual {
         private selectionManager: ISelectionManager;
         private xAxisGroup: d3.Selection<SVGElement>;
         private yAxisGroup: d3.Selection<SVGElement>;
-        // private visualSettings: VisualSettings;
+        private viewModel: ViewModel;
 
         private settings = {
             axis: {
@@ -126,6 +126,20 @@ module powerbi.extensibility.visual {
                         selector: null
                     });
                     break;
+                case 'dataColors':
+                    if(this.viewModel) {
+                        for(let dp of this.viewModel.dataPoints) {
+                            objectEnumeration.push({
+                                objectName: objectName,
+                                displayName: dp.category,
+                                properties: {
+                                    fill: dp.colour,
+                                },
+                                selector: dp.identity.getSelector()
+                            });
+                        }
+                    }
+                    break;
             };
 
             return objectEnumeration;
@@ -134,7 +148,7 @@ module powerbi.extensibility.visual {
         public update(options: VisualUpdateOptions) {
             this.updateSettings(options);
 
-            let viewModel = this.getViewModel(options);
+            this.viewModel = this.getViewModel(options);
 
             let width = options.viewport.width;
             let height = options.viewport.height;
@@ -148,7 +162,7 @@ module powerbi.extensibility.visual {
             });
 
             let yScale = d3.scale.linear()
-                .domain([0, viewModel.maxValue])
+                .domain([0, this.viewModel.maxValue])
                 .range([height - xAxisPadding, 0 + this.settings.border.top.value]);
             
             let yAxis = d3.svg.axis()
@@ -171,7 +185,7 @@ module powerbi.extensibility.visual {
                 });
 
             let xScale = d3.scale.ordinal()
-                .domain(viewModel.dataPoints.map(d => d.category))
+                .domain(this.viewModel.dataPoints.map(d => d.category))
                 .rangeRoundBands([yAxisPadding, width], this.xPadding);
             
             let xAxis = d3.svg.axis()
@@ -198,7 +212,7 @@ module powerbi.extensibility.visual {
 
             let bars = this.barGroup
                 .selectAll(".bar")
-                .data(viewModel.dataPoints);
+                .data(this.viewModel.dataPoints);
 
             bars.enter()
                 .append("rect")
@@ -213,7 +227,7 @@ module powerbi.extensibility.visual {
                 })
                 .style({
                     fill: d => d.colour,
-                    "fill-opacity": d => viewModel.highlights ? d.highlighted ? 1.0 : 0.5 : 1.0
+                    "fill-opacity": d => this.viewModel.highlights ? d.highlighted ? 1.0 : 0.5 : 1.0
                 })
                 .on("click", d => {
                     this.selectionManager
@@ -269,12 +283,16 @@ module powerbi.extensibility.visual {
             let categories = view.categories[0];
             let values = view.values[0];
             let highlights = values.highlights;
+            let objects = categories.objects;
 
             for (let i = 0, len = Math.max(categories.values.length, values.values.length); i < len; i++) {
                 viewModel.dataPoints.push({
                     category: <string>categories.values[i],
                     value: <number>values.values[i],
-                    colour: this.host.colorPalette.getColor(<string>categories.values[i]).value,
+                    colour: objects && objects[i] && DataViewObjects.getFillColor(objects[i], {
+                        objectName: "dataColors",
+                        propertyName: "fill"
+                    }, null) || this.host.colorPalette.getColor(<string>categories.values[i]).value,
                     identity: this.host.createSelectionIdBuilder()
                         .withCategory(categories, i)
                         .createSelectionId(),

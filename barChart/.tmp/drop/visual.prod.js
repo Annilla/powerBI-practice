@@ -619,7 +619,6 @@ var powerbi;
                 var Visual = (function () {
                     function Visual(options) {
                         this.xPadding = 0.1;
-                        // private visualSettings: VisualSettings;
                         this.settings = {
                             axis: {
                                 x: {
@@ -685,6 +684,21 @@ var powerbi;
                                     selector: null
                                 });
                                 break;
+                            case 'dataColors':
+                                if (this.viewModel) {
+                                    for (var _i = 0, _a = this.viewModel.dataPoints; _i < _a.length; _i++) {
+                                        var dp = _a[_i];
+                                        objectEnumeration.push({
+                                            objectName: objectName,
+                                            displayName: dp.category,
+                                            properties: {
+                                                fill: dp.colour,
+                                            },
+                                            selector: dp.identity.getSelector()
+                                        });
+                                    }
+                                }
+                                break;
                         }
                         ;
                         return objectEnumeration;
@@ -692,7 +706,7 @@ var powerbi;
                     Visual.prototype.update = function (options) {
                         var _this = this;
                         this.updateSettings(options);
-                        var viewModel = this.getViewModel(options);
+                        this.viewModel = this.getViewModel(options);
                         var width = options.viewport.width;
                         var height = options.viewport.height;
                         var xAxisPadding = this.settings.axis.x.show.value ? this.settings.axis.x.padding.value : 0;
@@ -702,7 +716,7 @@ var powerbi;
                             height: height
                         });
                         var yScale = d3.scale.linear()
-                            .domain([0, viewModel.maxValue])
+                            .domain([0, this.viewModel.maxValue])
                             .range([height - xAxisPadding, 0 + this.settings.border.top.value]);
                         var yAxis = d3.svg.axis()
                             .scale(yScale)
@@ -722,7 +736,7 @@ var powerbi;
                             "font-size": "x-small"
                         });
                         var xScale = d3.scale.ordinal()
-                            .domain(viewModel.dataPoints.map(function (d) { return d.category; }))
+                            .domain(this.viewModel.dataPoints.map(function (d) { return d.category; }))
                             .rangeRoundBands([yAxisPadding, width], this.xPadding);
                         var xAxis = d3.svg.axis()
                             .scale(xScale)
@@ -746,7 +760,7 @@ var powerbi;
                         });
                         var bars = this.barGroup
                             .selectAll(".bar")
-                            .data(viewModel.dataPoints);
+                            .data(this.viewModel.dataPoints);
                         bars.enter()
                             .append("rect")
                             .classed("bar", true);
@@ -759,7 +773,7 @@ var powerbi;
                         })
                             .style({
                             fill: function (d) { return d.colour; },
-                            "fill-opacity": function (d) { return viewModel.highlights ? d.highlighted ? 1.0 : 0.5 : 1.0; }
+                            "fill-opacity": function (d) { return _this.viewModel.highlights ? d.highlighted ? 1.0 : 0.5 : 1.0; }
                         })
                             .on("click", function (d) {
                             _this.selectionManager
@@ -803,11 +817,15 @@ var powerbi;
                         var categories = view.categories[0];
                         var values = view.values[0];
                         var highlights = values.highlights;
+                        var objects = categories.objects;
                         for (var i = 0, len = Math.max(categories.values.length, values.values.length); i < len; i++) {
                             viewModel.dataPoints.push({
                                 category: categories.values[i],
                                 value: values.values[i],
-                                colour: this.host.colorPalette.getColor(categories.values[i]).value,
+                                colour: objects && objects[i] && DataViewObjects.getFillColor(objects[i], {
+                                    objectName: "dataColors",
+                                    propertyName: "fill"
+                                }, null) || this.host.colorPalette.getColor(categories.values[i]).value,
                                 identity: this.host.createSelectionIdBuilder()
                                     .withCategory(categories, i)
                                     .createSelectionId(),
