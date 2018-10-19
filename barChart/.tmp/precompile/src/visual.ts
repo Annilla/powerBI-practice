@@ -33,12 +33,14 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
         colour: string;
         identity: powerbi.visuals.ISelectionId;
         highlighted: boolean;
+        tooltips: VisualTooltipDataItem[];
     };
 
     interface ViewModel {
         dataPoints: DataPoint[];
         maxValue: number;
         highlights: boolean;
+        average: number;
     };
 
     export class Visual implements IVisual {
@@ -239,6 +241,36 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
                                     : 1.0
                             });
                         });
+                })
+                .on("mouseover", d => {
+                    let mouse = d3.mouse(this.svg.node());
+                    let x = mouse[0];
+                    let y = mouse[1];
+                    
+                    this.host.tooltipService.show({
+                        dataItems: d.tooltips,
+                        identities: [d.identity],
+                        coordinates: [x, y],
+                        isTouchEvent: false
+                    });
+                })
+                .on("mousemove", d => {
+                    let mouse = d3.mouse(this.svg.node());
+                    let x = mouse[0];
+                    let y = mouse[1];
+                    
+                    this.host.tooltipService.move({
+                        dataItems: d.tooltips,
+                        identities: [d.identity],
+                        coordinates: [x, y],
+                        isTouchEvent: false
+                    });
+                })
+                .on("mouseout", d => {
+                    this.host.tooltipService.hide({
+                        immediately: true,
+                        isTouchEvent: false
+                    });
                 });
 
             bars.exit()
@@ -268,7 +300,8 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
             let viewModel: ViewModel = {
                 dataPoints: [],
                 maxValue: 0,
-                highlights: false
+                highlights: false,
+                average: 0
             };
 
             if (!dv
@@ -276,7 +309,8 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
                 || !dv[0].categorical
                 || !dv[0].categorical.categories
                 || !dv[0].categorical.categories[0].source
-                || !dv[0].categorical.values)
+                || !dv[0].categorical.values
+                || !dv[0].metadata)
                 return viewModel;
 
             let view = dv[0].categorical;
@@ -284,6 +318,9 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
             let values = view.values[0];
             let highlights = values.highlights;
             let objects = categories.objects;
+            let metadata = dv[0].metadata;
+            let categoryColumnName = metadata.columns.filter(c => c.roles["category"])[0].displayName;
+            let valueColumnName = metadata.columns.filter(c => c.roles["measure"])[0].displayName;
 
             for (let i = 0, len = Math.max(categories.values.length, values.values.length); i < len; i++) {
                 viewModel.dataPoints.push({
@@ -296,12 +333,42 @@ module powerbi.extensibility.visual.barChartBC80E870F53F457F81A8959510AC6A85  {
                     identity: this.host.createSelectionIdBuilder()
                         .withCategory(categories, i)
                         .createSelectionId(),
-                    highlighted: highlights ? highlights[i] ? true : false : false
+                    highlighted: highlights ? highlights[i] ? true : false : false,
+                    tooltips: [
+                        {
+                            displayName: categoryColumnName,
+                            value: <string>categories.values[i]
+                        },
+                        {
+                            displayName: valueColumnName,
+                            value: (<number>values.values[i]).toFixed(2)
+                        }
+                    ]
                 });
             }
 
             viewModel.maxValue = d3.max(viewModel.dataPoints, d => d.value);
             viewModel.highlights = viewModel.dataPoints.filter(d => d.highlighted).length > 0;
+
+            if (viewModel.dataPoints.length > 0) {
+                viewModel.average = d3.sum(viewModel.dataPoints, d => d.value) / viewModel.dataPoints.length;
+            }
+
+            for (let dp of viewModel.dataPoints) {
+                dp.tooltips.push({
+                    displayName: "Deviation (abs)",
+                    value: (dp.value - viewModel.average).toFixed(2)
+                });
+            }
+
+            if(viewModel.average !== 0) {
+                for (let dp of viewModel.dataPoints) {
+                    dp.tooltips.push({
+                        displayName: "Deviation (%)",
+                        value: (100 * (dp.value - viewModel.average) / viewModel.average).toFixed(2) + "%"
+                    })
+                }
+            }
 
             return viewModel;
         }

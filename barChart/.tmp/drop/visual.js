@@ -785,6 +785,34 @@ var powerbi;
                                         : 1.0
                                 });
                             });
+                        })
+                            .on("mouseover", function (d) {
+                            var mouse = d3.mouse(_this.svg.node());
+                            var x = mouse[0];
+                            var y = mouse[1];
+                            _this.host.tooltipService.show({
+                                dataItems: d.tooltips,
+                                identities: [d.identity],
+                                coordinates: [x, y],
+                                isTouchEvent: false
+                            });
+                        })
+                            .on("mousemove", function (d) {
+                            var mouse = d3.mouse(_this.svg.node());
+                            var x = mouse[0];
+                            var y = mouse[1];
+                            _this.host.tooltipService.move({
+                                dataItems: d.tooltips,
+                                identities: [d.identity],
+                                coordinates: [x, y],
+                                isTouchEvent: false
+                            });
+                        })
+                            .on("mouseout", function (d) {
+                            _this.host.tooltipService.hide({
+                                immediately: true,
+                                isTouchEvent: false
+                            });
                         });
                         bars.exit()
                             .remove();
@@ -804,20 +832,25 @@ var powerbi;
                         var viewModel = {
                             dataPoints: [],
                             maxValue: 0,
-                            highlights: false
+                            highlights: false,
+                            average: 0
                         };
                         if (!dv
                             || !dv[0]
                             || !dv[0].categorical
                             || !dv[0].categorical.categories
                             || !dv[0].categorical.categories[0].source
-                            || !dv[0].categorical.values)
+                            || !dv[0].categorical.values
+                            || !dv[0].metadata)
                             return viewModel;
                         var view = dv[0].categorical;
                         var categories = view.categories[0];
                         var values = view.values[0];
                         var highlights = values.highlights;
                         var objects = categories.objects;
+                        var metadata = dv[0].metadata;
+                        var categoryColumnName = metadata.columns.filter(function (c) { return c.roles["category"]; })[0].displayName;
+                        var valueColumnName = metadata.columns.filter(function (c) { return c.roles["measure"]; })[0].displayName;
                         for (var i = 0, len = Math.max(categories.values.length, values.values.length); i < len; i++) {
                             viewModel.dataPoints.push({
                                 category: categories.values[i],
@@ -829,11 +862,40 @@ var powerbi;
                                 identity: this.host.createSelectionIdBuilder()
                                     .withCategory(categories, i)
                                     .createSelectionId(),
-                                highlighted: highlights ? highlights[i] ? true : false : false
+                                highlighted: highlights ? highlights[i] ? true : false : false,
+                                tooltips: [
+                                    {
+                                        displayName: categoryColumnName,
+                                        value: categories.values[i]
+                                    },
+                                    {
+                                        displayName: valueColumnName,
+                                        value: values.values[i].toFixed(2)
+                                    }
+                                ]
                             });
                         }
                         viewModel.maxValue = d3.max(viewModel.dataPoints, function (d) { return d.value; });
                         viewModel.highlights = viewModel.dataPoints.filter(function (d) { return d.highlighted; }).length > 0;
+                        if (viewModel.dataPoints.length > 0) {
+                            viewModel.average = d3.sum(viewModel.dataPoints, function (d) { return d.value; }) / viewModel.dataPoints.length;
+                        }
+                        for (var _i = 0, _a = viewModel.dataPoints; _i < _a.length; _i++) {
+                            var dp = _a[_i];
+                            dp.tooltips.push({
+                                displayName: "Deviation (abs)",
+                                value: (dp.value - viewModel.average).toFixed(2)
+                            });
+                        }
+                        if (viewModel.average !== 0) {
+                            for (var _b = 0, _c = viewModel.dataPoints; _b < _c.length; _b++) {
+                                var dp = _c[_b];
+                                dp.tooltips.push({
+                                    displayName: "Deviation (%)",
+                                    value: (100 * (dp.value - viewModel.average) / viewModel.average).toFixed(2) + "%"
+                                });
+                            }
+                        }
                         return viewModel;
                     };
                     return Visual;
